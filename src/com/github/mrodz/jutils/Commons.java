@@ -359,6 +359,14 @@ public class Commons {
         return true;
     }
 
+    public static <K> String pln(K s) {
+        return "\r\n" + s.toString();
+    }
+
+    public static <K> String ln(K s) {
+        return s.toString() + "\r\n";
+    }
+
     /**
      * Return true if any of the conditions are true.
      * @param booleans a list of boolean values.

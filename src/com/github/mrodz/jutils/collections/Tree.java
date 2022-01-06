@@ -1,11 +1,22 @@
 package com.github.mrodz.jutils.collections;
+
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.github.mrodz.jutils.Commons.*;
 
 /**
  * <p>An implementation of a Tree Data Structure in Java. This class acts as both
@@ -143,7 +154,9 @@ public class Tree<T> implements Collection<Tree<T>> {
     //
 
     /**
-     * Add pre-determined nodes to this node (varargs).
+     * Add constructed nodes to this node (varargs).
+     * This is the way in which all nodes are set to branch from
+     * a parent node.
      *
      * @param nodes the nodes to be added.
      */
@@ -257,10 +270,16 @@ public class Tree<T> implements Collection<Tree<T>> {
      * @param res    Recursive field: to use, initialize a new {@link StringBuilder}
      * @param init   This is the grid to be traversed.
      * @param offset Recursive field, represents the amount of tab/spaces: to use, set to {@code 0}.
+     * @param renderEscapeCharacters whether or not to render Java's escape
+     *                               characters [\r,\n,\b, etc.] (preferably set
+     *                               to {@code false}, seeing as messing with these
+     *                               values could mess up the {@link String}'s
+     *                               style).
      * @return a {@link String} containing a formatted tree, one that resembles the output from
      * the {@code tree} command in the windows command line.
      */
-    private String buildFormattedTree(StringBuilder res, Tree<T> init, int offset) {
+    private String buildFormattedTree(final StringBuilder res, Tree<T> init, int offset,
+                                      final boolean renderEscapeCharacters) {
         List<Tree<T>> children = init.getChildren();
 
         // No children exist; the node is the last node in this lineage
@@ -293,11 +312,11 @@ public class Tree<T> implements Collection<Tree<T>> {
                 node.getParent().completed = true;
             }
 
-            res.append(' ').append(ln(this.escapeCharacters
+            res.append(' ').append(!renderEscapeCharacters
                     ? cancelEscapeSequences.apply(node.getNodeValue().toString())
-                    : node.getNodeValue()));
+                    : node.getNodeValue()).append("\r\n");
 
-            buildFormattedTree(res, node, offset + 1);
+            buildFormattedTree(res, node, offset + 1, renderEscapeCharacters);
         }
 
         // Reset the 'completed field.'
@@ -311,11 +330,46 @@ public class Tree<T> implements Collection<Tree<T>> {
 
     /**
      * Print this tree's content in a natural, easy to follow manner.
-     *
-     * @see #buildFormattedTree(StringBuilder, Tree, int)
+     * @see #buildFormattedTree(StringBuilder, Tree, int, boolean)
+     * @see #print()
      */
     public void print() {
-        System.out.println(this.getFancyString());
+        print(false);
+    }
+
+    /**
+     * Print this tree's content in a natural, easy to follow manner.
+     *
+     * @param renderEscapeCharacters whether or not to render Java's escape
+     *                               characters [\r,\n,\b, etc.] (preferably set
+     *                               to {@code false}, seeing as messing with these
+     *                               values could mess up the {@link String}'s
+     *                               style).
+     * @see #buildFormattedTree(StringBuilder, Tree, int, boolean)
+     */
+    public void print(boolean renderEscapeCharacters) {
+        System.out.println(this.getFancyString(renderEscapeCharacters));
+    }
+
+    /**
+     * Get this tree's content in a fancy format. Keep in mind that the
+     * style of the return value depends on the viewport, since smaller
+     * STD I/O's might not be able to a show the entirety of a long value
+     * on a single line.
+     *
+     * @param renderEscapeCharacters whether or not to render Java's escape
+     *                               characters [\r,\n,\b, etc.] (preferably set
+     *                               to {@code false}, seeing as messing with these
+     *                               values could mess up the {@link String}'s
+     *                               style).
+     * @return a large formatted {@link String}
+     * @see #print()
+     */
+    private String getFancyString(boolean renderEscapeCharacters) {
+        // Handle deprecated functionality: data = null
+        String str = this.DATA == null ? this.getClass().getSimpleName() + '@' + this.hashCode() : this.DATA.toString();
+        str += this.getChildren().size() == 0 ? "" : "\r\n"+(buildFormattedTree(new StringBuilder(), this, 0, renderEscapeCharacters));
+        return str;
     }
 
     /**
@@ -328,11 +382,10 @@ public class Tree<T> implements Collection<Tree<T>> {
      * @see #print()
      */
     public String getFancyString() {
-        // Handle deprecated functionality: data = null
-        String str = this.DATA == null ? this.getClass().getSimpleName() + '@' + this.hashCode() : this.DATA.toString();
-        str += this.getChildren().size() == 0 ? "" : pln(buildFormattedTree(new StringBuilder(), this, 0));
-        return str;
+        return getFancyString(false);
     }
+
+
 
     /**
      * Set a node as this tree's child.
@@ -452,36 +505,25 @@ public class Tree<T> implements Collection<Tree<T>> {
         StringBuilder res = new StringBuilder();
         char[] chars = str.toCharArray();
         for (char c : chars) {
-            switch (c) {
-                case 9:
-                    res.append("\\t");
-                    break;
-                case 10:
-                    res.append("\\n");
-                    break;
-                case 13:
-                    res.append("\\r");
-                    break;
-                default:
-                    res.append(c);
-                    break;
-            }
+            if (c == 8) res.append("\\b");
+            else if (c == 9) res.append("\\t");
+            else if (c == 10) res.append("\\n");
+            else if (c == 13) res.append("\\r");
+            else res.append(c);
         }
         return res.toString();
     };
-
-    public static <K> String pln(K s) {
-        return "\r\n" + s.toString();
-    }
-
-    public static <K> String ln(K s) {
-        return s.toString() + "\r\n";
-    }
 
     //
     // OVERRIDES
     //
 
+    /**
+     * Used in {@link #size()} to get the count of nodes in this tree.
+     * @param res recursive parameter; set to {@code 0}.
+     * @param init the {@link Tree} to start at.
+     * @return the count of nodes in this tree.
+     */
     private int size(int res, Tree<T> init) {
         List<Tree<T>> children = init.getChildren();
 
@@ -632,8 +674,9 @@ public class Tree<T> implements Collection<Tree<T>> {
      * {@code toArray()}.
      */
     @Override
+    @SuppressWarnings("unchecked")
     public <K> K[] toArray(K[] a) {
-        return this.CHILDREN.toArray(a);
+        return (K[]) this.CHILDREN.toArray(cast(a, Tree[].class));
     }
 
     /**
@@ -748,7 +791,7 @@ public class Tree<T> implements Collection<Tree<T>> {
     public boolean addAll(Collection<? extends Tree<T>> c) {
         try {
             @SuppressWarnings("unchecked")
-            Tree<T>[] arr = (Tree<T>[]) Array.newInstance(new Tree<T>().getClass(), 0);
+            Tree<T>[] arr = (Tree<T>[]) Array.newInstance(Tree.class, 0);
             this.insert(c.toArray(arr));
             return true;
         } catch (Exception e) {
@@ -817,6 +860,12 @@ public class Tree<T> implements Collection<Tree<T>> {
         }
     }
 
+    /**
+     * Recursive function to loop through every node in a tree.
+     * @param init the node to start at.
+     * @param action a {@link Consumer} action that accepts the
+     * {@link #DATA} of the node.
+     */
     private void forEach0(Tree<T> init, final Consumer<? super Tree<T>> action) {
         List<Tree<T>> children = init.getChildren();
 
@@ -846,6 +895,11 @@ public class Tree<T> implements Collection<Tree<T>> {
         this.CHILDREN.clear();
     }
 
+    /**
+     * Standard method
+     * @param o another object
+     * @return whether or not another object is equal to this instance.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
