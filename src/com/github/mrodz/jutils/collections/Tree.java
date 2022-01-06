@@ -90,8 +90,9 @@ public class Tree<T> implements Collection<Tree<T>> {
 
     /**
      * These are the characters used to visualize the tree.
+     * <p>values: ['│', '└', '├', '─']</p>
      */
-    private static final char[] SPECIAL_CHARACTERS = {0x2502, 0x2514, 0x251C, 0x2500};
+    private static final char[] SPECIAL_CHARACTERS = {'│', '└', '├', '─'};
 
     //
     // Preferences
@@ -299,9 +300,10 @@ public class Tree<T> implements Collection<Tree<T>> {
             buildFormattedTree(res, node, offset + 1);
         }
 
-//        for (int i = 0; i < children.size(); i++) {
-//            children.get(i).completed = false;
-//        }
+        // Reset the 'completed field.'
+        for (Tree<T> child : children) {
+            child.getParent().completed = false;
+        }
 
         // clear excess newline, return value
         return res.substring(0, res.length() - 1);
@@ -325,29 +327,11 @@ public class Tree<T> implements Collection<Tree<T>> {
      * @return a large formatted {@link String}
      * @see #print()
      */
-    // fixme - 12/30/2021
     public String getFancyString() {
         // Handle deprecated functionality: data = null
-        clearNodeParents(this);
-        forEach(n -> System.out.println(n.completed));
         String str = this.DATA == null ? this.getClass().getSimpleName() + '@' + this.hashCode() : this.DATA.toString();
         str += this.getChildren().size() == 0 ? "" : pln(buildFormattedTree(new StringBuilder(), this, 0));
         return str;
-    }
-
-    private void clearNodeParents(Tree<T> init) {
-        List<Tree<T>> children = init.getChildren();
-
-        // No children exist; the node is the last node in this lineage
-        if (children.size() == 0) {
-            return;
-        }
-
-        // Go through each child
-        for (int i = 0; i < children.size(); i++) {
-            children.get(i).completed = false;
-            clearNodeParents(children.get(i));
-        }
     }
 
     /**
