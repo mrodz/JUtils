@@ -100,7 +100,7 @@ public class Wheel<T> implements Collection<T> {
      */
     @Override
     public String toString() {
-        return messages.toString();
+        return String.format("[top: %s | others: %s]", getCurrentElement(), messages.toString());
     }
 
     /**

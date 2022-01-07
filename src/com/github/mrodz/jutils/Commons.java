@@ -137,6 +137,16 @@ public class Commons {
     }
 
     /**
+     * Pause the current execution of the calling {@link Thread}, and
+     * wait <tt>x</tt> milliseconds before continuing.
+     * @param millis the amount of milliseconds to wait.
+     * @throws InterruptedException if the waiting is interrupted.
+     */
+    public static void waitFor(long millis) throws InterruptedException {
+        doAfter(millis, () -> {});
+    }
+
+    /**
      * Stop the current execution of a program, wait <tt>millis</tt>
      * milliseconds, and then run <tt>action</tt>.
      * @param millis {@code long} value, represents the amount of milliseconds to pause for.

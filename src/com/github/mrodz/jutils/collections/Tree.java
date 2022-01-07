@@ -77,12 +77,12 @@ public class Tree<T> implements Collection<Tree<T>> {
     /**
      * The actual value stored in this node of the tree.
      */
-    private volatile T DATA;
+    private T DATA;
 
     /**
      * The parent node to this instance. If this is the root node, its parent is {@code null}
      */
-    private volatile Tree<T> PARENT;
+    private Tree<T> PARENT;
 
     /**
      * An {@link ArrayList} containing all nodes that are children to this node.
@@ -92,7 +92,7 @@ public class Tree<T> implements Collection<Tree<T>> {
     /**
      * Used when printing the grid; ignore.
      */
-    private volatile boolean completed = false;
+    private boolean completed = false;
 
     /**
      * Stores all of the values associated with the children to this node.
@@ -114,6 +114,7 @@ public class Tree<T> implements Collection<Tree<T>> {
      * getting a fancy {@link String} version of the table (preferred: {@code true}).
      * @see #cancelEscapeSequences
      */
+    @Deprecated
     private boolean escapeCharacters = true;
 
     /**
@@ -303,9 +304,8 @@ public class Tree<T> implements Collection<Tree<T>> {
             boolean isLastElement = i == children.size() - 1;
 
             res.append(str.reverse());
-            res.append(isLastElement
-                    ? SPECIAL_CHARACTERS[1]
-                    : SPECIAL_CHARACTERS[2]).append(repeatCharacters.apply(2, SPECIAL_CHARACTERS[3]));
+            res.append(isLastElement ? SPECIAL_CHARACTERS[1] : SPECIAL_CHARACTERS[2]);
+            res.append(repeatCharacters.apply(2, SPECIAL_CHARACTERS[3]));
 
             // is the node the last node to appear in the sequence (visually)
             if (isLastElement) {
@@ -367,7 +367,7 @@ public class Tree<T> implements Collection<Tree<T>> {
      */
     private String getFancyString(boolean renderEscapeCharacters) {
         // Handle deprecated functionality: data = null
-        String str = this.DATA == null ? this.getClass().getSimpleName() + '@' + this.hashCode() : this.DATA.toString();
+        String str = this.DATA == null ? super.toString() : this.DATA.toString();
         str += this.getChildren().size() == 0 ? "" : "\r\n"+(buildFormattedTree(new StringBuilder(), this, 0, renderEscapeCharacters));
         return str;
     }
@@ -473,6 +473,7 @@ public class Tree<T> implements Collection<Tree<T>> {
      *
      * @return whether it is or is not
      */
+    @Deprecated
     public boolean isEscapingCharacters() {
         return escapeCharacters;
     }
@@ -483,6 +484,7 @@ public class Tree<T> implements Collection<Tree<T>> {
      *
      * @param escapeCharacters the value
      */
+    @Deprecated
     public void setEscapingCharacters(boolean escapeCharacters) {
         this.escapeCharacters = escapeCharacters;
     }
@@ -494,8 +496,8 @@ public class Tree<T> implements Collection<Tree<T>> {
     /**
      * Function that returns a {@link String} repeating a character (c) a certain amount of times (reps).
      */
-    private static final BiFunction<Integer, Character, String> repeatCharacters
-            = (reps, c) -> String.valueOf(c).repeat(Math.max(0, reps));
+    private static final BiFunction<Integer, Character, String> repeatCharacters = (reps, c) ->
+            String.valueOf(c).repeat(Math.max(0, reps));
 
     /**
      * Low-level function that returns a {@link String} canceling most ['\n', '\t', '\r']
@@ -519,6 +521,18 @@ public class Tree<T> implements Collection<Tree<T>> {
     //
 
     /**
+     * Returns the number of elements in this collection.  If this collection
+     * contains more than {@code Integer.MAX_VALUE} elements, returns
+     * {@code Integer.MAX_VALUE}.
+     *
+     * @return the number of elements in this collection
+     */
+    @Override
+    public int size() {
+        return size(1, this);
+    }
+
+    /**
      * Used in {@link #size()} to get the count of nodes in this tree.
      * @param res recursive parameter; set to {@code 0}.
      * @param init the {@link Tree} to start at.
@@ -540,18 +554,6 @@ public class Tree<T> implements Collection<Tree<T>> {
         }
 
         return res;
-    }
-
-    /**
-     * Returns the number of elements in this collection.  If this collection
-     * contains more than {@code Integer.MAX_VALUE} elements, returns
-     * {@code Integer.MAX_VALUE}.
-     *
-     * @return the number of elements in this collection
-     */
-    @Override
-    public int size() {
-        return size(1, this);
     }
 
     /**
