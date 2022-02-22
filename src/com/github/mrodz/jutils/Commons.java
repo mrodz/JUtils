@@ -1,6 +1,7 @@
 package com.github.mrodz.jutils;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -36,6 +37,15 @@ public class Commons {
         for (int i = minIncl; i <= maxIncl; i++)
             result[i - minIncl] = i;
         return result;
+    }
+
+    /**
+     * Similar to the built-in range() function in Python.
+     * @param maxNonIncl the maximum bound of the range, non-inclusive.
+     * @return {@link #range(int, int)} with params <0, <tt>maxNonIncl</tt> - 1>
+     */
+    public static int[] range(int maxNonIncl) {
+        return range(0, maxNonIncl - 1);
     }
 
     /**
@@ -355,6 +365,28 @@ public class Commons {
         } else {
             return (T) original;
         }
+    }
+
+    /**
+     * Take an array, of any type, and remove elements should their value have
+     * been equal to that of the previous element.
+     * @param array an array.
+     * @param <T> the type of the array. Does not take primitives
+     *           (see {@link #cast(Object, Class)} to work around this issue).
+     * @return a new array with immediate duplicates removed.
+     */
+    public static <T> T[] removeImmediateRepeatingElements(final T[] array) {
+        ArrayList<T> copy = new ArrayList<>();
+        T latest = null;
+        for (T element : array) {
+            if (!element.equals(latest)) {
+                copy.add(element);
+                latest = element;
+            }
+        }
+        @SuppressWarnings("unchecked")
+        T[] result = (T[]) Array.newInstance(array.getClass().getComponentType(), 0);
+        return copy.toArray(result);
     }
 
     /**
